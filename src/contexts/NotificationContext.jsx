@@ -1,5 +1,17 @@
-import React, { createContext, useEffect, useState, useCallback, useMemo } from 'react';
-import { API_BASE_URL } from '../services/api';
+import {
+  createContext,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+import { API_BASE_URL } from "../services/api";
+
+// Helper para extraer el token de auth y construir el header Authorization
+const getAuthHeader = () => {
+  const token = document.cookie.match(/authToken=([^;]+)/)?.[1];
+  return token ? { Authorization: `Bearer ${token}` } : {};
+};
 // import webSocketService from '../services/websocket'; // DESHABILITADO - ahora se usa useNotifications.js
 // import { mapWebSocketEventToNotification } from '../utils/notificationMapper'; // DESHABILITADO
 
@@ -17,17 +29,18 @@ export const NotificationProvider = ({ children }) => {
     try {
       setIsLoading(true);
       const response = await fetch(`${API_BASE_URL}/api/notifications`, {
-        credentials: 'include',
+        credentials: "include",
         headers: {
-          'Content-Type': 'application/json'
-        }
+          "Content-Type": "application/json",
+          ...getAuthHeader(),
+        },
       });
-      
+
       if (response.ok) {
         const data = await response.json();
         setNotifications(data || []);
       } else {
-  // Error cargando notificaciones
+        // Error cargando notificaciones
         setNotifications([]);
       }
     } catch {
@@ -40,57 +53,68 @@ export const NotificationProvider = ({ children }) => {
 
   // Agregar nueva notificación
   const addNotification = useCallback((notification) => {
-    setNotifications(prev => {
+    setNotifications((prev) => {
       // Evitar duplicados
-      const exists = prev.some(notif => notif.id === notification.id);
+      const exists = prev.some((notif) => notif.id === notification.id);
       if (exists) return prev;
-      
+
       // Mapear la notificación del WebSocket al formato esperado
       const mappedNotification = {
         id: notification.id || Date.now(),
-        title: notification.title || 'Nueva notificación',
-        message: notification.message || notification.content || '',
+        title: notification.title || "Nueva notificación",
+        message: notification.message || notification.content || "",
         read: notification.read || false,
-        createdAt: notification.createdAt || notification.timestamp || new Date().toISOString(),
-        type: notification.type || 'message',
-        ...notification
+        createdAt:
+          notification.createdAt ||
+          notification.timestamp ||
+          new Date().toISOString(),
+        type: notification.type || "message",
+        ...notification,
       };
-      
+
       return [mappedNotification, ...prev];
     });
   }, []);
 
   // Eliminar notificación
   const removeNotification = useCallback((notificationId) => {
-    setNotifications(prev => prev.filter(notif => notif.id !== notificationId));
+    setNotifications((prev) =>
+      prev.filter((notif) => notif.id !== notificationId)
+    );
   }, []);
 
   // Marcar como leída
   const markAsRead = useCallback(async (notificationId) => {
     try {
       // Actualizar en el servidor
-      const response = await fetch(`${API_BASE_URL}/api/notifications/${notificationId}`, {
-        method: 'PUT',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ read: true })
-      });
+      const response = await fetch(
+        `${API_BASE_URL}/api/notifications/${notificationId}`,
+        {
+          method: "PUT",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+            ...getAuthHeader(),
+          },
+          body: JSON.stringify({ read: true }),
+        }
+      );
 
       if (response.ok) {
         // Actualizar en el estado local
         // Después de actualizar el estado local, emitir evento
-        setNotifications(prev =>
-          prev.map(notif =>
+        setNotifications((prev) =>
+          prev.map((notif) =>
             notif.id === notificationId ? { ...notif, read: true } : notif
           )
         );
 
         // AGREGAR ESTA LÍNEA:
-        window.dispatchEvent(new CustomEvent('notificationUpdated', { 
-          detail: { type: 'markAsRead', notificationId } 
-        }));
+        window.dispatchEvent(
+          new CustomEvent("notificationUpdated", {
+            detail: { type: "markAsRead", notificationId },
+          })
+        );
       }
     } catch {
       // Error marcando notificación como leída
@@ -99,22 +123,23 @@ export const NotificationProvider = ({ children }) => {
 
   // Marcar todas como leídas
   const markAllAsRead = useCallback(async () => {
-    const unreadNotifications = notifications.filter(n => !n.read);
-    
+    const unreadNotifications = notifications.filter((n) => !n.read);
+
     // Marcar todas como leídas localmente primero para UX rápida
-    setNotifications(prev => prev.map(notif => ({ ...notif, read: true })));
+    setNotifications((prev) => prev.map((notif) => ({ ...notif, read: true })));
 
     // Intentar marcar en el servidor
     try {
       await Promise.all(
-        unreadNotifications.map(notification =>
+        unreadNotifications.map((notification) =>
           fetch(`${API_BASE_URL}/api/notifications/${notification.id}`, {
-            method: 'PUT',
-            credentials: 'include',
+            method: "PUT",
+            credentials: "include",
             headers: {
-              'Content-Type': 'application/json'
+              "Content-Type": "application/json",
+              ...getAuthHeader(),
             },
-            body: JSON.stringify({ read: true })
+            body: JSON.stringify({ read: true }),
           })
         )
       );
@@ -126,7 +151,7 @@ export const NotificationProvider = ({ children }) => {
 
   // Obtener contador de notificaciones no leídas
   const unreadCount = useMemo(() => {
-    return notifications.filter(notif => !notif.read).length;
+    return notifications.filter((notif) => !notif.read).length;
   }, [notifications]);
 
   // Obtener las notificaciones más recientes
@@ -138,22 +163,22 @@ export const NotificationProvider = ({ children }) => {
 
   // Configurar WebSocket listeners cuando el contexto se inicializa - DESHABILITADO
   useEffect(() => {
-  // ...existing code...
+    // ...existing code...
 
     // Cargar notificaciones iniciales solo si hay usuario autenticado
     const checkAuthAndLoad = () => {
       const token = document.cookie.match(/authToken=([^;]+)/)?.[1];
       if (token) {
         loadNotifications();
-        
-  // ...existing code...
+
+        // ...existing code...
       }
     };
 
     checkAuthAndLoad();
 
     return () => {
-  // ...existing code...
+      // ...existing code...
     };
   }, [addNotification, loadNotifications]);
 
@@ -166,7 +191,7 @@ export const NotificationProvider = ({ children }) => {
     removeNotification,
     markAsRead,
     markAllAsRead,
-    loadNotifications
+    loadNotifications,
   };
 
   return (
