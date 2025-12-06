@@ -5,15 +5,7 @@ import {
   useMemo,
   useState,
 } from "react";
-import { API_BASE_URL } from "../services/api";
-
-// Helper para extraer el token de auth y construir el header Authorization
-const getAuthHeader = () => {
-  const token = document.cookie.match(/authToken=([^;]+)/)?.[1];
-  return token ? { Authorization: `Bearer ${token}` } : {};
-};
-// import webSocketService from '../services/websocket'; // DESHABILITADO - ahora se usa useNotifications.js
-// import { mapWebSocketEventToNotification } from '../utils/notificationMapper'; // DESHABILITADO
+import { notificationAPI } from "../services/api";
 
 // Crear el contexto
 const NotificationContext = createContext();
@@ -28,22 +20,10 @@ export const NotificationProvider = ({ children }) => {
   const loadNotifications = useCallback(async () => {
     try {
       setIsLoading(true);
-      const response = await fetch(`${API_BASE_URL}/api/notifications`, {
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-          ...getAuthHeader(),
-        },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setNotifications(data || []);
-      } else {
-        // Error cargando notificaciones
-        setNotifications([]);
-      }
-    } catch {
+      const data = await notificationAPI.getAllNotifications();
+      setNotifications(data || []);
+    } catch (error) {
+      console.error("NotificationContext: Error loading notifications", error);
       // Error cargando notificaciones
       setNotifications([]);
     } finally {
@@ -84,42 +64,33 @@ export const NotificationProvider = ({ children }) => {
   }, []);
 
   // Marcar como leída
-  const markAsRead = useCallback(async (notificationId) => {
-    try {
-      // Actualizar en el servidor
-      const response = await fetch(
-        `${API_BASE_URL}/api/notifications/${notificationId}`,
-        {
-          method: "PUT",
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-            ...getAuthHeader(),
-          },
-          body: JSON.stringify({ read: true }),
-        }
-      );
-
-      if (response.ok) {
-        // Actualizar en el estado local
-        // Después de actualizar el estado local, emitir evento
+  const markAsRead = useCallback(
+    async (notificationId) => {
+      try {
+        // Actualizar en el estado local inmediatamente para UX rápida
         setNotifications((prev) =>
           prev.map((notif) =>
             notif.id === notificationId ? { ...notif, read: true } : notif
           )
         );
 
-        // AGREGAR ESTA LÍNEA:
+        // Actualizar en el servidor
+        await notificationAPI.markAsRead(notificationId);
+
+        // Emitir evento
         window.dispatchEvent(
           new CustomEvent("notificationUpdated", {
             detail: { type: "markAsRead", notificationId },
           })
         );
+      } catch (error) {
+        console.error("Error marking notification as read:", error);
+        // Error marcando notificación como leída - recargar para sincronizar
+        loadNotifications();
       }
-    } catch {
-      // Error marcando notificación como leída
-    }
-  }, []);
+    },
+    [loadNotifications]
+  );
 
   // Marcar todas como leídas
   const markAllAsRead = useCallback(async () => {
@@ -132,18 +103,11 @@ export const NotificationProvider = ({ children }) => {
     try {
       await Promise.all(
         unreadNotifications.map((notification) =>
-          fetch(`${API_BASE_URL}/api/notifications/${notification.id}`, {
-            method: "PUT",
-            credentials: "include",
-            headers: {
-              "Content-Type": "application/json",
-              ...getAuthHeader(),
-            },
-            body: JSON.stringify({ read: true }),
-          })
+          notificationAPI.markAsRead(notification.id)
         )
       );
-    } catch {
+    } catch (error) {
+      console.error("Error marking all notifications as read:", error);
       // Error marcando todas las notificaciones como leídas
       loadNotifications();
     }
