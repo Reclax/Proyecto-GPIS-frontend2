@@ -401,32 +401,42 @@ function MisProductosPage() {
       let incidencia = null;
 
       if (producto.incidences && producto.incidences.length > 0) {
-        // Buscar incidencia activa (pending o in_progress)
+        // Buscar incidencia resuelta con suspensión o incidencia activa
         incidencia = producto.incidences.find(
-          (inc) => inc.status === "pending" || inc.status === "in_progress"
+          (inc) => 
+            (inc.status === "resolved" && inc.resolution === "suspended") ||
+            inc.status === "pending" || 
+            inc.status === "in_progress"
         );
 
-        // Si no hay activa, tomar la más reciente
+        // Si no hay, tomar la más reciente
         if (!incidencia) {
-          incidencia = producto.incidences[producto.incidences.length - 1];
+          incidencia = producto.incidences[producto.incidencias.length - 1];
         }
-      } else {
-        // Buscar en todas las incidencias como fallback
+      }
+      
+      // Si no hay incidencias cargadas, buscar en todas las incidencias
+      if (!incidencia) {
+        console.log('🔍 Buscando incidencias para producto', producto.id);
         const incidencias = await incidenceAPI.getAll();
         incidencia = incidencias.find(
           (inc) =>
             inc.productId === producto.id &&
-            (inc.status === "pending" || inc.status === "in_progress")
+            ((inc.status === "resolved" && inc.resolution === "suspended") ||
+             inc.status === "pending" || 
+             inc.status === "in_progress")
         );
       }
 
       if (!incidencia) {
         showNotification(
           "error",
-          "No se encontró una incidencia activa para este producto"
+          "No se encontró una incidencia para este producto"
         );
         return;
       }
+
+      console.log('✅ Incidencia encontrada:', incidencia);
 
       // Verificar si ya existe una apelación para esta incidencia
       try {
@@ -725,13 +735,11 @@ function MisProductosPage() {
                             Editar
                           </button>
                         )}
-                        {/* Apelar: para productos suspendidos, bloqueados o en revisión con incidencia activa */}
+                        {/* Apelar: para productos suspendidos, bloqueados o en revisión */}
                         {["block", "review", "suspended"].includes(
                           producto.moderationStatus
                         ) &&
-                          !producto.appealStatus &&
-                          producto.incidences &&
-                          producto.incidences.length > 0 && (
+                          !producto.appealStatus && (
                             <button
                               onClick={() => handleApelar(producto)}
                               className="px-5 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-2 font-semibold"
