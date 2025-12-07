@@ -677,7 +677,7 @@ function MisProductosPage() {
                       </div>
 
                       {/* Mostrar reportes si el producto tiene incidencias */}
-                      {["review", "block", "flagged"].includes(
+                      {["review", "block", "flagged", "suspended"].includes(
                         producto.moderationStatus
                       ) &&
                         producto.reports &&
@@ -711,7 +711,7 @@ function MisProductosPage() {
                       {/* Botones de acción */}
                       <div className="flex flex-wrap gap-3">
                         {/* Editar: solo si no está bloqueado/suspendido/flagged/en revisión */}
-                        {!["block", "suspended", "flagged", "review"].includes(
+                        {!["block", "suspended", "flagged", "review", "permanently_suspended"].includes(
                           producto.moderationStatus
                         ) && (
                           <button
@@ -722,8 +722,8 @@ function MisProductosPage() {
                             Editar
                           </button>
                         )}
-                        {/* Apelar: para productos en 'block' O 'review' (cuando hay incidencia activa) */}
-                        {["block", "review"].includes(
+                        {/* Apelar: para productos suspendidos, bloqueados o en revisión con incidencia activa */}
+                        {["block", "review", "suspended"].includes(
                           producto.moderationStatus
                         ) &&
                           !producto.appealStatus &&
@@ -742,11 +742,11 @@ function MisProductosPage() {
                           onClick={() =>
                             handleEliminar(producto.id, producto.nombre)
                           }
-                          disabled={["block", "suspended", "flagged"].includes(
+                          disabled={["block", "suspended", "flagged", "permanently_suspended"].includes(
                             producto.moderationStatus
                           )}
                           className={`px-5 py-2 rounded-lg transition-colors flex items-center gap-2 font-semibold ${
-                            ["block", "suspended", "flagged"].includes(
+                            ["block", "suspended", "flagged", "permanently_suspended"].includes(
                               producto.moderationStatus
                             )
                               ? "bg-gray-400 text-gray-200 cursor-not-allowed"
