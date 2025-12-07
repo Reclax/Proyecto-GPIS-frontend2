@@ -96,7 +96,7 @@ function GestionProductosPage() {
 
           // Obtener información del vendedor
           const vendedorNombre = p.User
-            ? `${p.User.name || ""} ${p.User.surname || ""}`.trim() ||
+            ? `${p.User.name || ""} ${p.User.lastname || ""}`.trim() ||
               p.User.email ||
               `ID ${p.sellerId}`
             : `ID ${p.sellerId}`;
