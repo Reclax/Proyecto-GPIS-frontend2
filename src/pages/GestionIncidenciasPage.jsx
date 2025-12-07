@@ -531,10 +531,10 @@ function GestionIncidenciasPage() {
   }, [isAuthorized, loadAllUsers]);
 
   useEffect(() => {
-    if (isAuthorized && Object.keys(userMap).length > 0) {
+    if (isAuthorized) {
       refreshData();
     }
-  }, [isAuthorized, userMap, refreshData]);
+  }, [isAuthorized, refreshData]);
 
   // Manejar navegación desde notificaciones
   useEffect(() => {
