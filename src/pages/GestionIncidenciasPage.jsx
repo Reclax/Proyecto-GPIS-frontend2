@@ -1121,13 +1121,31 @@ function GestionIncidenciasPage() {
     try {
       setActionLoading(true);
 
-      // Mapear decisión a resolution
-      // aprobar = aceptar el reporte = suspender producto
-      // rechazar = rechazar el reporte = producto activo
-      let resolution = "suspended"; // Por defecto suspender
-      if (decision === "rechazar") resolution = "rejected";
-      if (decision === "aprobar") resolution = "suspended";
-      if (decision === "suspender") resolution = "suspended";
+      // Detectar si es revisión de apelación
+      const isAppealReview = incidence.isAppealReview || false;
+
+      // Mapear decisión a resolution según el contexto
+      let resolution;
+
+      if (isAppealReview) {
+        // Es una apelación (segunda decisión)
+        if (decision === "aprobar") {
+          resolution = "approved"; // Aceptar apelación = reactivar producto
+        } else if (decision === "rechazar") {
+          resolution = "rejected"; // Rechazar apelación = bloqueo permanente (backend lo maneja)
+        } else {
+          resolution = "suspended"; // Suspender = bloqueo permanente
+        }
+      } else {
+        // Es incidencia normal (primera decisión)
+        if (decision === "aprobar") {
+          resolution = "suspended"; // Aceptar reporte = suspender temporalmente
+        } else if (decision === "rechazar") {
+          resolution = "rejected"; // Rechazar reporte = producto activo
+        } else {
+          resolution = "suspended"; // Suspender explícito
+        }
+      }
 
       // Preparar payload con los nuevos campos
       const payload = {
@@ -1139,9 +1157,13 @@ function GestionIncidenciasPage() {
       await incidenceAPI.update(incidence.id, payload);
 
       // El backend actualiza automáticamente el moderationStatus del producto según la resolution
-      // approved/rejected -> moderationStatus: 'active', status: 'active'
-      // suspended (primera vez) -> moderationStatus: 'suspended', status: 'inactive' (permite apelar)
-      // suspended (desde apelación) -> moderationStatus: 'permanently_suspended', status: 'deleted'
+      // approved -> moderationStatus: 'active', status: 'active' (siempre reactiva)
+      // rejected -> moderationStatus depende del contexto:
+      //   - Primera decisión: 'active' (rechaza el reporte)
+      //   - Apelación: 'blocked'/'flagged' (bloqueo permanente)
+      // suspended -> moderationStatus depende del contexto:
+      //   - Primera decisión: 'suspended', status: 'inactive' (permite apelar)
+      //   - Apelación: 'blocked'/'flagged' (bloqueo permanente)
 
       await refreshData();
       setDecisionNotes((prev) => ({ ...prev, [incidence.id]: "" }));
