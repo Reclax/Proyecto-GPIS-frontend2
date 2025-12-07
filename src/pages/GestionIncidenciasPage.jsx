@@ -289,6 +289,8 @@ const normalizeIncidence = (
     productModerationStatus: product.moderationStatus,
     moderadorId: moderatorId || null,
     moderadorNombre: moderadorNombre || "",
+    isAppealReview: incidence.isAppealReview || false, // Si viene de una apelación
+    appealId: incidence.appealId || null, // ID de la apelación origen
     createdAt:
       incidence.dateIncidence ||
       incidence.createdAt ||
@@ -1073,19 +1075,33 @@ function GestionIncidenciasPage() {
       return;
     }
 
-    const messages = {
-      aprobar:
-        "Se aceptará el reporte y el producto será suspendido temporalmente. El vendedor podrá apelar esta decisión.",
-      rechazar:
-        "Se rechazará el reporte y el producto volverá a estar activo y visible. ¿Confirmas?",
-      suspender:
-        "El producto será suspendido temporalmente. El vendedor podrá apelar esta decisión antes de un bloqueo permanente.",
-    };
+    // Mensajes diferentes según si es revisión de apelación o incidencia normal
+    const isAppealReview = incidence.isAppealReview || false;
+
+    const messages = isAppealReview
+      ? {
+          // Mensajes para revisión de apelación (segunda decisión)
+          aprobar:
+            "Se aceptará la apelación y el producto volverá a estar activo. El vendedor podrá vender de nuevo.",
+          rechazar:
+            "Se rechazará la apelación y el producto será BLOQUEADO PERMANENTEMENTE. Esta acción es definitiva y el vendedor NO podrá apelar de nuevo. ¿Confirmas?",
+          suspender:
+            "El producto será bloqueado permanentemente. Esta acción es definitiva.",
+        }
+      : {
+          // Mensajes para incidencia normal (primera decisión)
+          aprobar:
+            "Se aceptará el reporte y el producto será suspendido temporalmente. El vendedor podrá apelar esta decisión.",
+          rechazar:
+            "Se rechazará el reporte y el producto volverá a estar activo y visible. ¿Confirmas?",
+          suspender:
+            "El producto será suspendido temporalmente. El vendedor podrá apelar esta decisión antes de un bloqueo permanente.",
+        };
 
     setModalData({
       isOpen: true,
       type: "confirm",
-      title: "Confirmar decisión",
+      title: isAppealReview ? "Decidir apelación" : "Confirmar decisión",
       message: messages[decision] || "Esta acción actualizará la incidencia.",
       confirmText: "Confirmar",
       cancelText: "Cancelar",
@@ -1487,9 +1503,17 @@ function GestionIncidenciasPage() {
                   <p className="text-xs text-gray-500 font-semibold uppercase mb-1">
                     {incidence.codigo}
                   </p>
-                  <h3 className="text-xl font-bold text-gray-900">
-                    {incidence.productTitle}
-                  </h3>
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <h3 className="text-xl font-bold text-gray-900">
+                      {incidence.productTitle}
+                    </h3>
+                    {incidence.isAppealReview && (
+                      <span className="px-3 py-1 bg-purple-600 text-white text-xs font-bold rounded-full flex items-center gap-1">
+                        <FiFileText className="text-sm" />
+                        Revisión de Apelación
+                      </span>
+                    )}
+                  </div>
                   <div className="flex flex-wrap gap-2 mt-3 text-xs">
                     <span className="px-2 py-1 rounded-full bg-blue-50 text-blue-700 font-medium inline-flex items-center gap-1">
                       <FiClock className="text-blue-500" />{" "}
@@ -1754,7 +1778,10 @@ function GestionIncidenciasPage() {
                         }
                         className="flex-1 px-4 py-3 bg-red-600 text-white font-semibold rounded-xl hover:bg-red-700 transition disabled:opacity-50 flex items-center justify-center gap-2 text-sm"
                       >
-                        <MdBlock /> Rechazar
+                        <MdBlock />{" "}
+                        {incidence.isAppealReview
+                          ? "Bloquear definitivamente"
+                          : "Rechazar"}
                       </button>
                     </div>
                   </div>
