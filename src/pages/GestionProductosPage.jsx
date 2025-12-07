@@ -182,7 +182,7 @@ function GestionProductosPage() {
           const reporteCreado = await reportAPI.create({
             productId: producto.id,
             userId: currentUser.id,
-            typeReport: "Reporte Administrativo",
+            type: "Reporte Administrativo",
             description:
               "Producto reportado por el administrador. Requiere revisión por un moderador.",
           });
