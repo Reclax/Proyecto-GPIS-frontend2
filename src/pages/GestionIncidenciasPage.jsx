@@ -629,21 +629,18 @@ function GestionIncidenciasPage() {
   const incidencesForStats = useMemo(
     () =>
       incidences.map((inc) => {
-        // Mapear el estado del producto a estado de incidencia para stats
-        let estadoIncidencia = "pendiente";
-        const modStatus = inc.productModerationStatus;
+        // Usar directamente el estado de la incidencia, no el del producto
+        const estadoIncidencia = inc.estado; // "pendiente", "en_revision", "resuelto", "suspendido"
 
-        if (modStatus === "review" || modStatus === "flagged") {
-          estadoIncidencia = "en_revision"; // Activa
-        } else if (
-          ["active", "block", "suspended", "rejected"].includes(modStatus)
-        ) {
-          estadoIncidencia = "resuelto"; // Cerrada
+        // Normalizar para stats: en_revision y suspendido cuentan como activas
+        let estadoParaStats = estadoIncidencia;
+        if (estadoIncidencia === "suspendido") {
+          estadoParaStats = "en_revision"; // Suspendido cuenta como activa
         }
 
         return {
           moderador_id: inc.moderadorId,
-          estado: estadoIncidencia,
+          estado: estadoParaStats,
         };
       }),
     [incidences]
