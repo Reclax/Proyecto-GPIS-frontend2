@@ -104,25 +104,40 @@ function GestionUsuariosPage() {
     return matchSearch && matchEstado && matchRol;
   });
 
-  const toggleUserStatus = (user) => {
+  const toggleUserStatus = async (user) => {
     const action = user.estado ? 'suspender' : 'activar';
     setModalData({
       isOpen: true,
       type: 'confirm',
       title: `${action === 'suspender' ? 'Suspender' : 'Activar'} Usuario`,
       message: `¿Estás seguro de que deseas ${action} la cuenta de ${user.nombre} ${user.apellido}?${action === 'suspender' ? '\n\nEsta acción ocultará todos sus productos y reportes.' : ''}`,
-      onConfirm: () => {
-        setUsuarios(prev =>
-          prev.map(u => u.id === user.id ? { ...u, estado: !u.estado } : u)
-        );
-        setModalData({
-          isOpen: true,
-          type: 'success',
-          title: 'Éxito',
-          message: `Usuario ${action === 'suspender' ? 'suspendido' : 'activado'} correctamente. El usuario ha sido notificado.`,
-          confirmText: 'Entendido'
-        });
-        setShowDropdown(null);
+      onConfirm: async () => {
+        try {
+          // Actualizar en el backend
+          await api.put(`/users/${user.id}`, { status: !user.estado });
+          
+          // Actualizar en el estado local
+          setUsuarios(prev =>
+            prev.map(u => u.id === user.id ? { ...u, estado: !u.estado } : u)
+          );
+          setModalData({
+            isOpen: true,
+            type: 'success',
+            title: 'Éxito',
+            message: `Usuario ${action === 'suspender' ? 'suspendido' : 'activado'} correctamente. El usuario ha sido notificado.`,
+            confirmText: 'Entendido'
+          });
+          setShowDropdown(null);
+        } catch (error) {
+          console.error('Error al cambiar estado del usuario:', error);
+          setModalData({
+            isOpen: true,
+            type: 'error',
+            title: 'Error',
+            message: 'No se pudo cambiar el estado del usuario. Intenta nuevamente.',
+            confirmText: 'Entendido'
+          });
+        }
       },
       confirmText: action === 'suspender' ? 'Suspender' : 'Activar',
       cancelText: 'Cancelar'

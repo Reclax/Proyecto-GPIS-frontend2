@@ -613,12 +613,15 @@ export const reportAPI = {
   // Obtener todos los reportes (pendientes / historial)
   getAll: async () => {
     const response = await api.get("/reports");
-    // Handle both direct array response and nested {data: [...]} response
-    if (Array.isArray(response.data)) {
-      return response.data;
+    // Handle response structure: prefer payload, then data, then direct array
+    if (response.data && Array.isArray(response.data.payload)) {
+      return response.data.payload;
     }
     if (response.data && Array.isArray(response.data.data)) {
       return response.data.data;
+    }
+    if (Array.isArray(response.data)) {
+      return response.data;
     }
     if (response.data && Array.isArray(response.data.reports)) {
       return response.data.reports;
