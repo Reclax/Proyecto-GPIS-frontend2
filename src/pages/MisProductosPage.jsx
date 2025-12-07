@@ -122,6 +122,8 @@ function MisProductosPage() {
                 ? "Vendido"
                 : product.status === "reserved"
                 ? "Reservado"
+                : product.status === "restricted"
+                ? "Bloqueado"
                 : "Inactivo",
             moderationStatus: product.moderationStatus || "active",
             incidenceId: product.incidenceId || null,
@@ -222,6 +224,8 @@ function MisProductosPage() {
               ? "Vendido"
               : product.status === "reserved"
               ? "Reservado"
+              : product.status === "restricted"
+              ? "Bloqueado"
               : "Inactivo",
           moderationStatus: product.moderationStatus || "active",
           incidenceId: product.incidenceId || null,
