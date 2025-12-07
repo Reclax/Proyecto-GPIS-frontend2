@@ -65,7 +65,10 @@ function GestionProductosPage() {
           // Fallback si endpoint no disponible
           return await productAPI.getAll();
         });
-        // Mapear al modelo usado en esta vista sin datos estáticos
+
+        console.log("Productos recibidos del backend:", data);
+
+        // Mapear al modelo usado en esta vista
         const mapped = (Array.isArray(data) ? data : []).map((p) => {
           const firstPhoto =
             p.ProductPhotos && p.ProductPhotos.length > 0
@@ -76,15 +79,36 @@ function GestionProductosPage() {
               ? firstPhoto
               : `${API_BASE_URL}${firstPhoto}`
             : null;
+
           // Mapear estado del backend a etiquetas locales
           const estadoMap = {
             active: "activo",
+            sold: "vendido",
+            inactive: "inactivo",
+            reserved: "reservado",
+            restricted: "bloqueado",
             suspended: "suspendido",
             pending: "pendiente",
             deleted: "eliminado",
           };
           const estadoLocal = estadoMap[p.status] || "activo";
-          const moderationStatus = p.moderationStatus || "active"; // active | review | block
+          const moderationStatus = p.moderationStatus || "active";
+
+          // Obtener información del vendedor
+          const vendedorNombre = p.User
+            ? `${p.User.name || ""} ${p.User.surname || ""}`.trim() ||
+              p.User.email ||
+              `ID ${p.sellerId}`
+            : `ID ${p.sellerId}`;
+
+          // Obtener nombre de categoría
+          const categoriaNombre = p.Category
+            ? p.Category.name || `ID ${p.categoryId}`
+            : `ID ${p.categoryId}`;
+
+          // Contar reportes
+          const numReportes = p.Reports ? p.Reports.length : 0;
+
           return {
             id: p.id,
             codigo: `PROD-${p.id}`,
@@ -96,19 +120,25 @@ function GestionProductosPage() {
             estado: estadoLocal,
             condicion: estadoLocal,
             fecha_publicacion: p.createdAt || new Date().toISOString(),
-            vendedor: `ID ${p.sellerId}`,
+            vendedor: vendedorNombre,
             vendedor_id: p.sellerId,
-            categoria: `ID ${p.categoryId}`,
-            es_peligroso: false,
-            reportes: 0,
+            categoria: categoriaNombre,
+            categoria_id: p.categoryId,
+            es_peligroso:
+              moderationStatus === "flagged" ||
+              moderationStatus === "permanently_suspended",
+            reportes: numReportes,
             foto,
             moderationStatus,
             // Guardar datos crudos para el modal
             _raw: p,
           };
         });
+
+        console.log("Productos mapeados:", mapped);
         setProductos(mapped);
-      } catch {
+      } catch (error) {
+        console.error("Error al cargar productos:", error);
         setProductos([]);
       } finally {
         setLoading(false);
