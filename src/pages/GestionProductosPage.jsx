@@ -324,14 +324,22 @@ function GestionProductosPage() {
     switch (estado) {
       case "activo":
         return "bg-green-100 text-green-800 border-green-300";
+      case "vendido":
+        return "bg-blue-100 text-blue-800 border-blue-300";
+      case "reservado":
+        return "bg-purple-100 text-purple-800 border-purple-300";
+      case "inactivo":
+        return "bg-gray-100 text-gray-800 border-gray-300";
       case "pendiente":
         return "bg-yellow-100 text-yellow-800 border-yellow-300";
       case "suspendido":
-        return "bg-red-100 text-red-800 border-red-300";
+        return "bg-orange-100 text-orange-800 border-orange-300";
+      case "bloqueado":
+        return "bg-red-900 text-white border-red-900";
       case "eliminado":
-        return "bg-gray-100 text-gray-800";
+        return "bg-gray-100 text-gray-800 border-gray-300";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "bg-gray-100 text-gray-800 border-gray-300";
     }
   };
 
@@ -408,8 +416,12 @@ function GestionProductosPage() {
               >
                 <option value="todos">Todos</option>
                 <option value="activo">Activos</option>
+                <option value="vendido">Vendidos</option>
+                <option value="reservado">Reservados</option>
+                <option value="inactivo">Inactivos</option>
                 <option value="pendiente">Pendientes</option>
                 <option value="suspendido">Suspendidos</option>
+                <option value="bloqueado">Bloqueados</option>
                 <option value="eliminado">Eliminados</option>
               </select>
             </div>
@@ -602,6 +614,7 @@ function GestionProductosPage() {
                           {producto.estado === "activo" && <FiCheck />}
                           {producto.estado === "pendiente" && <FiClock />}
                           {producto.estado === "suspendido" && <MdBlock />}
+                          {producto.estado === "bloqueado" && <MdBlock />}
                           {producto.estado.toUpperCase()}
                         </span>
                         <span
@@ -610,14 +623,36 @@ function GestionProductosPage() {
                               ? "bg-green-50 text-green-700 border-green-300"
                               : producto.moderationStatus === "review"
                               ? "bg-orange-50 text-orange-700 border-orange-300"
+                              : producto.moderationStatus === "suspended"
+                              ? "bg-yellow-50 text-yellow-700 border-yellow-300"
+                              : producto.moderationStatus ===
+                                "permanently_suspended"
+                              ? "bg-red-900 text-white border-red-900"
+                              : producto.moderationStatus === "flagged"
+                              ? "bg-purple-50 text-purple-700 border-purple-300"
                               : "bg-red-50 text-red-700 border-red-300"
                           }`}
                         >
                           {producto.moderationStatus === "active" && "✔ Activo"}
                           {producto.moderationStatus === "review" &&
                             "⏳ Revisión"}
+                          {producto.moderationStatus === "suspended" &&
+                            "⚠️ Suspendido"}
+                          {producto.moderationStatus ===
+                            "permanently_suspended" && "🚫 Bloqueado"}
+                          {producto.moderationStatus === "flagged" &&
+                            "🚩 Reportado"}
                           {producto.moderationStatus === "block" &&
                             "⛔ Bloqueado"}
+                          {![
+                            "active",
+                            "review",
+                            "suspended",
+                            "permanently_suspended",
+                            "flagged",
+                            "block",
+                          ].includes(producto.moderationStatus) &&
+                            producto.moderationStatus}
                         </span>
                         <span className="text-xs bg-gray-100 text-gray-800 px-3 py-1 rounded-full font-semibold">
                           {producto.tipo === "producto"
