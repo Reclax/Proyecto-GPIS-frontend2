@@ -148,17 +148,17 @@ const normalizeAppeal = (appeal, incidencesList = []) => {
     (inc) => parseNumericId(inc.id || inc.incidenceId) === incidenceId
   );
 
-  // Derivar estado desde el productModerationStatus de la incidencia:
-  // - Si el producto está en review/flagged -> apelación "pendiente"
-  // - Si el producto está active/block/suspended/rejected -> apelación "resuelta"
+  // Usar el status de la apelación desde la base de datos
+  // pending -> pendiente, converted_to_incidence/dismissed/resolved -> resuelta
   let estado = "pendiente";
-  if (relatedIncidence) {
-    const modStatus =
-      relatedIncidence.productModerationStatus ||
-      relatedIncidence.product?.moderationStatus;
-    if (["active", "block", "suspended", "rejected"].includes(modStatus)) {
-      estado = "resuelta";
-    }
+  if (appeal.status) {
+    const statusMap = {
+      pending: "pendiente",
+      converted_to_incidence: "resuelta",
+      dismissed: "resuelta",
+      resolved: "resuelta",
+    };
+    estado = statusMap[appeal.status] || "pendiente";
   }
 
   return {
