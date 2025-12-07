@@ -1031,8 +1031,8 @@ function GestionIncidenciasPage() {
 
     const messages = {
       aprobar:
-        "El producto volverá a estar activo y visible. La incidencia se cerrará como resuelta (reporte rechazado).",
-      rechazar: "El reporte será rechazado y el producto volverá a estar activo. ¿Confirmas?",
+        "Se aceptará el reporte y el producto será suspendido temporalmente. El vendedor podrá apelar esta decisión.",
+      rechazar: "Se rechazará el reporte y el producto volverá a estar activo y visible. ¿Confirmas?",
       suspender:
         "El producto será suspendido temporalmente. El vendedor podrá apelar esta decisión antes de un bloqueo permanente.",
     };
@@ -1053,8 +1053,11 @@ function GestionIncidenciasPage() {
       setActionLoading(true);
       
       // Mapear decisión a resolution
-      let resolution = 'approved';
+      // aprobar = aceptar el reporte = suspender producto
+      // rechazar = rechazar el reporte = producto activo
+      let resolution = 'suspended'; // Por defecto suspender
       if (decision === 'rechazar') resolution = 'rejected';
+      if (decision === 'aprobar') resolution = 'suspended';
       if (decision === 'suspender') resolution = 'suspended';
       
       // Preparar payload con los nuevos campos
@@ -1629,7 +1632,7 @@ function GestionIncidenciasPage() {
                       <button
                         disabled={actionLoading}
                         onClick={() =>
-                          handleResolveIncidence(incidence, "rechazar")
+                          handleResolveIncidence(incidence, "aprobar")
                         }
                         className="flex-1 px-4 py-3 bg-green-600 text-white font-semibold rounded-xl hover:bg-green-700 transition disabled:opacity-50 flex items-center justify-center gap-2 text-sm"
                       >
@@ -1638,7 +1641,7 @@ function GestionIncidenciasPage() {
                       <button
                         disabled={actionLoading}
                         onClick={() =>
-                          handleResolveIncidence(incidence, "aprobar")
+                          handleResolveIncidence(incidence, "rechazar")
                         }
                         className="flex-1 px-4 py-3 bg-red-600 text-white font-semibold rounded-xl hover:bg-red-700 transition disabled:opacity-50 flex items-center justify-center gap-2 text-sm"
                       >
