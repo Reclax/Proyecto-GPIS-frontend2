@@ -741,7 +741,9 @@ function GestionIncidenciasPage() {
     // No excluir productos con incidencias resueltas (historial)
     const productIdsWithActiveIncidence = new Set(
       incidences
-        .filter((inc) => inc.estado === "pendiente" || inc.estado === "en_revision")
+        .filter(
+          (inc) => inc.estado === "pendiente" || inc.estado === "en_revision"
+        )
         .map((inc) => inc.productId)
     );
     const groups = new Map();
