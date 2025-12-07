@@ -273,6 +273,74 @@ function GestionProductosPage() {
     });
   };
 
+  // Bloquear permanentemente sin opción a reclamo
+  const bloquearPermanentemente = (producto) => {
+    setModalData({
+      isOpen: true,
+      type: "warning",
+      title: "⚠️ Bloquear Producto Permanentemente",
+      message: `¿Estás seguro de bloquear permanentemente "${producto.titulo}"?\n\n⚠️ ADVERTENCIA: Esta acción es irreversible.\n\n• El producto será marcado como PELIGROSO\n• Se bloqueará automáticamente sin opción a reclamo\n• El vendedor NO podrá apelar esta decisión\n• El producto quedará permanentemente suspendido\n\nUsa esta opción solo para contenido claramente peligroso, ilegal o que viole gravemente las políticas.`,
+      onConfirm: async () => {
+        try {
+          // Cerrar modal de confirmación
+          setModalData({
+            isOpen: false,
+            type: "info",
+            title: "",
+            message: "",
+            onConfirm: null,
+          });
+
+          // Actualizar estado de moderación a permanently_suspended
+          await productAPI.updateModerationStatus(
+            producto.id,
+            "permanently_suspended"
+          );
+
+          // Actualizar estado local
+          setProductos((prev) =>
+            prev.map((p) =>
+              p.id === producto.id
+                ? {
+                    ...p,
+                    es_peligroso: true,
+                    estado: "bloqueado",
+                    moderationStatus: "permanently_suspended",
+                    razon_suspension:
+                      "Bloqueado permanentemente por administrador sin opción a reclamo",
+                    fecha_suspension: new Date().toISOString(),
+                  }
+                : p
+            )
+          );
+
+          setModalData({
+            isOpen: true,
+            type: "success",
+            title: "Producto Bloqueado Permanentemente",
+            message: `"${producto.titulo}" ha sido bloqueado permanentemente sin opción a reclamo. El vendedor ha sido notificado.`,
+            confirmText: "Entendido",
+            onConfirm: null,
+          });
+        } catch (error) {
+          console.error("Error al bloquear permanentemente:", error);
+          setModalData({
+            isOpen: true,
+            type: "error",
+            title: "Error al Bloquear",
+            message:
+              error.response?.data?.message ||
+              "No se pudo bloquear el producto. Por favor, intenta nuevamente.",
+            confirmText: "Cerrar",
+            onConfirm: null,
+          });
+        }
+      },
+      confirmText: "Sí, Bloquear Permanentemente",
+      cancelText: "Cancelar",
+    });
+  };
+
   // Revertir marca de peligroso
   const revertirPeligroso = (producto) => {
     setModalData({
@@ -817,20 +885,32 @@ function GestionProductosPage() {
                         {producto.moderationStatus === "active" &&
                           !producto.es_peligroso &&
                           producto.estado !== "bloqueado" && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                console.log(
-                                  "Click en reportar, producto:",
-                                  producto
-                                );
-                                marcarComoPeligroso(producto);
-                              }}
-                              className="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-lg transition"
-                            >
-                              <FiAlertTriangle className="inline mr-2" />
-                              Reportar
-                            </button>
+                            <>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  console.log(
+                                    "Click en reportar, producto:",
+                                    producto
+                                  );
+                                  marcarComoPeligroso(producto);
+                                }}
+                                className="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-lg transition"
+                              >
+                                <FiAlertTriangle className="inline mr-2" />
+                                Reportar
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  bloquearPermanentemente(producto);
+                                }}
+                                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition flex items-center gap-2"
+                              >
+                                <MdBlock className="inline" />
+                                Marcar como Peligroso
+                              </button>
+                            </>
                           )}
                         {producto.es_peligroso && (
                           <button
