@@ -1031,10 +1031,10 @@ function GestionIncidenciasPage() {
 
     const messages = {
       aprobar:
-        "El producto se mantendrá aprobado y la incidencia se cerrará como resuelta.",
-      rechazar: "El producto será marcado (flagged). ¿Confirmas el rechazo?",
+        "El producto volverá a estar activo y visible. La incidencia se cerrará como resuelta (reporte rechazado).",
+      rechazar: "El reporte será rechazado y el producto volverá a estar activo. ¿Confirmas?",
       suspender:
-        "El producto será suspendido. La incidencia quedará en historial.",
+        "El producto será suspendido temporalmente. El vendedor podrá apelar esta decisión antes de un bloqueo permanente.",
     };
 
     setModalData({
@@ -1066,20 +1066,10 @@ function GestionIncidenciasPage() {
       
       await incidenceAPI.update(incidence.id, payload);
 
-      // Actualizar estado del producto
-      if (incidence.productId) {
-        let moderationStatus = "active";
-        if (decision === "rechazar") moderationStatus = "flagged";
-        if (decision === "suspender") moderationStatus = "suspended";
-        try {
-          await productAPI.updateModerationStatus(
-            incidence.productId,
-            moderationStatus
-          );
-        } catch (e) {
-          console.warn("No se pudo actualizar moderationStatus del producto:", e);
-        }
-      }
+      // El backend actualiza automáticamente el moderationStatus del producto según la resolution
+      // approved/rejected -> moderationStatus: 'active', status: 'active'
+      // suspended (primera vez) -> moderationStatus: 'suspended', status: 'inactive' (permite apelar)
+      // suspended (desde apelación) -> moderationStatus: 'permanently_suspended', status: 'deleted'
       
       await refreshData();
       setDecisionNotes((prev) => ({ ...prev, [incidence.id]: "" }));
