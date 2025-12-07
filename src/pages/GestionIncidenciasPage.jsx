@@ -5,6 +5,7 @@ import {
   FiClock,
   FiExternalLink,
   FiEye,
+  FiFileText,
   FiInbox,
   FiLayers,
   FiMessageSquare,
