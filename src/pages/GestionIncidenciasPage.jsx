@@ -737,13 +737,18 @@ function GestionIncidenciasPage() {
   }, [appeals, incidences, userRole, currentUser]);
 
   const reportGroups = useMemo(() => {
-    const productIdsWithIncidence = new Set(
-      incidences.map((inc) => inc.productId)
+    // Solo excluir productos con incidencias ACTIVAS (pendiente o en_revision)
+    // No excluir productos con incidencias resueltas (historial)
+    const productIdsWithActiveIncidence = new Set(
+      incidences
+        .filter((inc) => inc.estado === "pendiente" || inc.estado === "en_revision")
+        .map((inc) => inc.productId)
     );
     const groups = new Map();
     reports.forEach((r) => {
       if (!r.productId) return;
-      if (productIdsWithIncidence.has(r.productId)) return;
+      // Solo excluir si el producto tiene una incidencia ACTIVA
+      if (productIdsWithActiveIncidence.has(r.productId)) return;
       if (!groups.has(r.productId)) {
         groups.set(r.productId, {
           productId: r.productId,
