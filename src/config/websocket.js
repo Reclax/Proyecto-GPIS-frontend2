@@ -6,7 +6,7 @@ export const websocketConfig = {
     import.meta.env.VITE_API_URL?.replace("http://", "ws://").replace(
       "https://",
       "wss://"
-    ) || "ws://localhost:3020",
+    ) || "ws://20.48.177.225:3020",
 
   // Configuraciones de conexión
   heartbeatInterval: 30000, // 30 segundos
@@ -34,7 +34,7 @@ export const WEBSOCKET_URLS = {
     import.meta.env.VITE_API_URL?.replace("http://", "ws://").replace(
       "https://",
       "wss://"
-    ) || "ws://localhost:3020",
+    ) || "ws://20.48.177.225:3020",
   production:
     import.meta.env.VITE_API_URL?.replace("http://", "wss://").replace(
       "https://",

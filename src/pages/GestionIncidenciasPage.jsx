@@ -1919,7 +1919,7 @@ function GestionIncidenciasPage() {
                           ? productPhoto
                           : `${
                               import.meta.env.VITE_API_URL ||
-                              "http://localhost:8080"
+                              "http://20.48.177.225:8080"
                             }${productPhoto}`
                       }
                       alt={productTitle}
