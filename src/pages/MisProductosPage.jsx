@@ -403,9 +403,9 @@ function MisProductosPage() {
       if (producto.incidences && producto.incidences.length > 0) {
         // Buscar incidencia resuelta con suspensión o incidencia activa
         incidencia = producto.incidences.find(
-          (inc) => 
+          (inc) =>
             (inc.status === "resolved" && inc.resolution === "suspended") ||
-            inc.status === "pending" || 
+            inc.status === "pending" ||
             inc.status === "in_progress"
         );
 
@@ -414,17 +414,17 @@ function MisProductosPage() {
           incidencia = producto.incidences[producto.incidencias.length - 1];
         }
       }
-      
+
       // Si no hay incidencias cargadas, buscar en todas las incidencias
       if (!incidencia) {
-        console.log('🔍 Buscando incidencias para producto', producto.id);
+        console.log("🔍 Buscando incidencias para producto", producto.id);
         const incidencias = await incidenceAPI.getAll();
         incidencia = incidencias.find(
           (inc) =>
             inc.productId === producto.id &&
             ((inc.status === "resolved" && inc.resolution === "suspended") ||
-             inc.status === "pending" || 
-             inc.status === "in_progress")
+              inc.status === "pending" ||
+              inc.status === "in_progress")
         );
       }
 
@@ -436,7 +436,7 @@ function MisProductosPage() {
         return;
       }
 
-      console.log('✅ Incidencia encontrada:', incidencia);
+      console.log("✅ Incidencia encontrada:", incidencia);
 
       // Verificar si ya existe una apelación para esta incidencia
       try {
