@@ -1154,24 +1154,32 @@ function GestionIncidenciasPage() {
         return;
       }
       setActionLoading(true);
+      
       // Incidencia relacionada para excluir moderador ya asignado
       const relatedIncidence = incidences.find(inc => inc.id === appeal.incidenceId);
       if (relatedIncidence && relatedIncidence.moderadorId && relatedIncidence.moderadorId === selectedId) {
-        showFeedback('warning', 'Ya asignado', 'Ese moderador ya está vinculado a la incidencia.');
+        showFeedback('warning', 'Ya asignado', 'Ese moderador ya está vinculado a la incidencia original.');
         setActionLoading(false);
         return;
       }
-      // Actualizar la incidencia asignando moderador (userId)
-      await incidenceAPI.update(appeal.incidenceId, { userId: selectedId });
-      // Intentar actualizar la apelación si el backend soporta assignedModeratorId
-      try {
-        if (appealAPI.update) {
-          await appealAPI.update(appeal.id, { assignedModeratorId: selectedId });
-        }
-      } catch (e) {
-        // Silenciar fallo opcional
-      }
-      showFeedback('success', 'Asignado', 'Moderador asignado para revisar la apelación.');
+      
+      // Crear NUEVA incidencia para la revisión de apelación
+      const incidencePayload = {
+        dateIncidence: new Date().toISOString(),
+        description: `Revisión de apelación: ${appeal.motivo}`,
+        status: "pending",
+        userId: selectedId, // Moderador asignado
+        productId: relatedIncidence?.productId,
+        appealId: appeal.id, // Vincular con la apelación
+        isAppealReview: true, // CRÍTICO: marcar como revisión de apelación
+        assignedByAdminId: currentUser?.id || null
+      };
+
+      console.log(`📊 Creando nueva incidencia para apelación ${appeal.id} con isAppealReview: true`);
+      
+      const response = await incidenceAPI.create(incidencePayload);
+      
+      showFeedback('success', 'Asignado', 'Se creó una nueva incidencia para revisar la apelación.');
       setAppealAssignments(prev => ({ ...prev, [appeal.id]: '' }));
       await refreshData();
     } catch (e) {

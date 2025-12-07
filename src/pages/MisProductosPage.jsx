@@ -1,37 +1,37 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
-  authAPI,
-  productAPI,
-  categoryAPI,
-  incidenceAPI,
-  appealAPI,
-  userAPI,
-  API_BASE_URL,
-} from "../services/api";
-import { useNavigate, Link } from "react-router-dom";
-import {
-  FiEye,
-  FiEdit,
-  FiTrash2,
-  FiPlus,
   FiAlertCircle,
   FiAlertTriangle,
-  FiX,
-  FiSave,
-  FiUpload,
   FiDollarSign,
-  FiMapPin,
-  FiTag,
+  FiEdit,
+  FiEye,
   FiFileText,
+  FiMapPin,
+  FiPlus,
+  FiSave,
+  FiTag,
+  FiTrash2,
+  FiUpload,
+  FiX,
 } from "react-icons/fi";
 import {
   HiDevicePhoneMobile,
-  HiShoppingBag,
   HiHomeModern,
+  HiShoppingBag,
   HiTrophy,
   HiTruck,
 } from "react-icons/hi2";
 import { IoGameController } from "react-icons/io5";
+import { Link, useNavigate } from "react-router-dom";
+import LocationPicker from "../components/common/LocationPicker";
+import {
+  API_BASE_URL,
+  appealAPI,
+  authAPI,
+  categoryAPI,
+  incidenceAPI,
+  productAPI,
+} from "../services/api";
 // Mapeo de íconos para categorías principales (igual que en VenderPage)
 const MAIN_CATEGORY_ICONS = {
   Electrónica: HiDevicePhoneMobile,
@@ -41,7 +41,6 @@ const MAIN_CATEGORY_ICONS = {
   Vehículos: HiTruck,
   Gaming: IoGameController,
 };
-import LocationPicker from "../components/common/LocationPicker";
 
 function MisProductosPage() {
   const [productos, setProductos] = useState([]);
@@ -711,9 +710,13 @@ function MisProductosPage() {
                       {/* Botones de acción */}
                       <div className="flex flex-wrap gap-3">
                         {/* Editar: solo si no está bloqueado/suspendido/flagged/en revisión */}
-                        {!["block", "suspended", "flagged", "review", "permanently_suspended"].includes(
-                          producto.moderationStatus
-                        ) && (
+                        {![
+                          "block",
+                          "suspended",
+                          "flagged",
+                          "review",
+                          "permanently_suspended",
+                        ].includes(producto.moderationStatus) && (
                           <button
                             onClick={() => handleEditar(producto.id)}
                             className="px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 font-semibold"
@@ -742,13 +745,19 @@ function MisProductosPage() {
                           onClick={() =>
                             handleEliminar(producto.id, producto.nombre)
                           }
-                          disabled={["block", "suspended", "flagged", "permanently_suspended"].includes(
-                            producto.moderationStatus
-                          )}
+                          disabled={[
+                            "block",
+                            "suspended",
+                            "flagged",
+                            "permanently_suspended",
+                          ].includes(producto.moderationStatus)}
                           className={`px-5 py-2 rounded-lg transition-colors flex items-center gap-2 font-semibold ${
-                            ["block", "suspended", "flagged", "permanently_suspended"].includes(
-                              producto.moderationStatus
-                            )
+                            [
+                              "block",
+                              "suspended",
+                              "flagged",
+                              "permanently_suspended",
+                            ].includes(producto.moderationStatus)
                               ? "bg-gray-400 text-gray-200 cursor-not-allowed"
                               : "bg-red-600 text-white hover:bg-red-700"
                           }`}
