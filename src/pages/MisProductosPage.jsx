@@ -438,17 +438,20 @@ function MisProductosPage() {
 
       console.log("✅ Incidencia encontrada:", incidencia);
 
-      // Verificar si ya existe una apelación para esta incidencia
+      // Verificar si ya existe una apelación ACTIVA para ESTA incidencia específica
       try {
         const apelaciones = await appealAPI.getAll();
         const apelacionExistente = apelaciones.find(
-          (appeal) => appeal.incidenceId === incidencia.id
+          (appeal) =>
+            appeal.incidenceId === incidencia.id &&
+            (appeal.status === "pending" ||
+              appeal.status === "converted_to_incidence")
         );
 
         if (apelacionExistente) {
           showNotification(
             "warning",
-            "Ya has enviado una apelación para este producto. Por favor espera la revisión del moderador."
+            "Ya has enviado una apelación para esta suspensión. Por favor espera la revisión del moderador."
           );
           return;
         }
