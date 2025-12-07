@@ -442,7 +442,9 @@ function GestionProductosPage() {
                 <option value="todos">Todos</option>
                 <option value="active">Activos</option>
                 <option value="review">En revisión</option>
-                <option value="block">Bloqueados</option>
+                <option value="suspended">Suspendidos</option>
+                <option value="permanently_suspended">Bloqueados</option>
+                <option value="flagged">Reportados</option>
               </select>
             </div>
             {/* Origen */}
@@ -512,7 +514,14 @@ function GestionProductosPage() {
             </div>
             <div className="bg-black/5 rounded-lg p-3 text-center border border-gray-300">
               <p className="text-lg font-bold text-gray-800">
-                {productos.filter((p) => p.moderationStatus === "block").length}
+                {
+                  productos.filter(
+                    (p) =>
+                      p.moderationStatus === "permanently_suspended" ||
+                      p.moderationStatus === "block" ||
+                      p.estado === "bloqueado"
+                  ).length
+                }
               </p>
               <p className="text-xs text-gray-700 font-semibold">Bloqueados</p>
             </div>
@@ -761,14 +770,18 @@ function GestionProductosPage() {
                         </button>
                         {/* Nota: Suspender/Activar solo se puede hacer desde Gestión de Incidencias */}
                         {/* Mensaje para productos bloqueados */}
-                        {producto.moderationStatus === "block" && (
+                        {(producto.moderationStatus ===
+                          "permanently_suspended" ||
+                          producto.moderationStatus === "block" ||
+                          producto.estado === "bloqueado") && (
                           <div className="px-4 py-2 bg-red-100 text-red-700 font-semibold rounded-lg border border-red-300">
-                            Producto bloqueado por moderación
+                            Producto bloqueado permanentemente
                           </div>
                         )}
-                        {/* Reportar: solo si está activo y no es peligroso */}
+                        {/* Reportar: solo si está activo y no es peligroso ni bloqueado */}
                         {producto.moderationStatus === "active" &&
-                          !producto.es_peligroso && (
+                          !producto.es_peligroso &&
+                          producto.estado !== "bloqueado" && (
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
