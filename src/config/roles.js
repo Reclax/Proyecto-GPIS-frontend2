@@ -161,9 +161,20 @@ export const LIMITES_INCIDENCIAS = {
 
 // ⭐ NUEVA FUNCIÓN: Obtener estadísticas de moderador
 export const obtenerEstadisticasModerador = (moderadorId, incidencias) => {
-  const incidenciasDelMod = incidencias.filter(
-    (inc) => inc.moderador_id === moderadorId && inc.estado === "en_revision"
-  );
+  // Normalizar el ID del moderador a número para comparación
+  const modId =
+    typeof moderadorId === "string" ? parseInt(moderadorId, 10) : moderadorId;
+
+  const incidenciasDelMod = incidencias.filter((inc) => {
+    // Normalizar el ID de la incidencia también
+    const incModId =
+      typeof inc.moderador_id === "string"
+        ? parseInt(inc.moderador_id, 10)
+        : inc.moderador_id;
+
+    // Contar incidencias asignadas a este moderador que están activas (en_revision)
+    return incModId === modId && inc.estado === "en_revision";
+  });
 
   return {
     incidenciasActivas: incidenciasDelMod.length,

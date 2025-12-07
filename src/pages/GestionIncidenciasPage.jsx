@@ -632,14 +632,15 @@ function GestionIncidenciasPage() {
         // Usar directamente el estado de la incidencia, no el del producto
         const estadoIncidencia = inc.estado; // "pendiente", "en_revision", "resuelto", "suspendido"
 
-        // Normalizar para stats: en_revision y suspendido cuentan como activas
+        // Para las estadísticas de moderador, solo contar las que están activas
+        // Las incidencias "en_revision" o "suspendido" cuentan como activas
         let estadoParaStats = estadoIncidencia;
         if (estadoIncidencia === "suspendido") {
           estadoParaStats = "en_revision"; // Suspendido cuenta como activa
         }
 
         return {
-          moderador_id: inc.moderadorId,
+          moderador_id: inc.moderadorId, // Usar moderadorId de la incidencia normalizada
           estado: estadoParaStats,
         };
       }),
