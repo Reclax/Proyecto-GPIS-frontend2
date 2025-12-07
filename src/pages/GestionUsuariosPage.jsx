@@ -55,7 +55,7 @@ function GestionUsuariosPage() {
             telefono: user.phone || 'No disponible',
             direccion: 'No disponible',
             genero: 'No especificado',
-            estado: true,
+            estado: user.status !== undefined ? user.status : true, // Usar status del backend
             fecha_registro: user.createdAt || new Date().toISOString(),
             rating_promedio: user.rating ? parseFloat(user.rating) : null,
             total_productos: 0,
