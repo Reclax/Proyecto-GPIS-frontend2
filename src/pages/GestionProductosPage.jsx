@@ -108,53 +108,8 @@ function GestionProductosPage() {
     return matchSearch && matchEstado && matchTipo && matchModeracion && matchOrigen;
   });
 
-  // Cambiar estado del producto
-  const cambiarEstadoProducto = (producto, nuevoEstado) => {
-    const accion = nuevoEstado === 'activo' ? 'activar' : 'suspender';
-    setModalData({
-      isOpen: true,
-      type: 'confirm',
-      title: `${accion === 'activar' ? 'Activar' : 'Suspender'} Producto`,
-      message: `¿Estás seguro de ${accion} el producto "${producto.titulo}"?${accion === 'suspender' ? '\n\nEsta acción:\n- Creará una incidencia pendiente automáticamente\n- Ocultará el producto de la plataforma\n- La incidencia aparecerá en "Incidencias pendientes"' : ''}`,
-      onConfirm: async () => {
-        try {
-          // Cuando se suspende: usar 'review' para que aparezca en pendientes
-          // Cuando se activa: usar 'active' para resolver incidencias
-          const targetModeration = nuevoEstado === 'suspendido' ? 'review' : 'active';
-          
-          console.log(`Cambiando estado de producto ${producto.id} a moderationStatus: ${targetModeration}`);
-          await productAPI.updateModerationStatus(producto.id, targetModeration);
-          
-          setProductos(prev =>
-            prev.map(p => p.id === producto.id ? {
-              ...p,
-              estado: nuevoEstado,
-              moderationStatus: targetModeration,
-              fecha_suspension: nuevoEstado === 'suspendido' ? new Date().toISOString() : null
-            } : p)
-          );
-          setModalData({
-            isOpen: true,
-            type: 'success',
-            title: 'Producto Actualizado',
-            message: `El producto ha sido ${accion === 'activar' ? 'activado' : 'suspendido'} correctamente${nuevoEstado === 'suspendido' ? '. Se ha creado una incidencia pendiente automáticamente.' : '.'}`,
-            confirmText: 'Entendido'
-          });
-        } catch (error) {
-          console.error('Error al cambiar estado:', error);
-          setModalData({
-            isOpen: true,
-            type: 'error',
-            title: 'Error',
-            message: 'No se pudo actualizar el estado del producto',
-            confirmText: 'Cerrar'
-          });
-        }
-      },
-      confirmText: accion === 'activar' ? 'Activar' : 'Suspender',
-      cancelText: 'Cancelar'
-    });
-  };
+  // Nota: Los productos solo se pueden suspender desde Gestión de Incidencias
+  // Esta página solo permite reportar para crear una incidencia
 
   // Marcar como peligroso
   const marcarComoPeligroso = (producto) => {
@@ -162,7 +117,7 @@ function GestionProductosPage() {
       isOpen: true,
       type: 'warning',
       title: 'Reportar',
-      message: `¿Estás seguro de reportar "${producto.titulo}"?\n\nEsto:\n- Creará un reporte administrativo\n- Creará una incidencia pendiente\n- Suspenderá automáticamente el producto\n- Lo ocultará de todos los usuarios\n- Notificará al vendedor\n- Permitirá una apelación`,
+      message: `¿Estás seguro de reportar "${producto.titulo}"?\n\nEsto:\n- Creará un reporte administrativo\n- Aparecerá en "Gestión de Incidencias" para ser asignado a un moderador\n- El moderador decidirá si suspende o rechaza el reporte\n- Si se suspende, el vendedor podrá apelar`,
       onConfirm: async () => {
         try {
           console.log('=== INICIANDO REPORTE DE PRODUCTO ===');
@@ -180,45 +135,30 @@ function GestionProductosPage() {
           const reporteCreado = await reportAPI.create({
             productId: producto.id,
             userId: currentUser.id,
-            type: 'reporte_administrativo',
-            description: 'Producto marcado como peligroso por el administrador. Detectado como potencialmente peligroso y suspendido automáticamente.'
+            typeReport: 'Reporte Administrativo',
+            description: 'Producto reportado por el administrador. Requiere revisión por un moderador.'
           });
           console.log('✅ Reporte creado:', reporteCreado);
 
-          // 3. Crear la incidencia asociada al reporte
-          console.log('Creando incidencia...');
-          const incidenciaCreada = await incidenceAPI.create({
-            userId: currentUser.id,
-            productId: producto.id,
-            description: 'Producto reportado y bloqueado por el administrador. Motivo: detectado como potencialmente peligroso.',
-            status: 'pending'
-          });
-          console.log('✅ Incidencia creada:', incidenciaCreada);
-
-          // 4. Actualizar el estado de moderación del producto a 'review' (en revisión)
-          console.log('Actualizando moderationStatus a review...');
-          await productAPI.updateModerationStatus(producto.id, 'review');
-          console.log('✅ ModerationStatus actualizado');
-
-          // 5. Actualizar el estado local
+          // Nota: NO creamos incidencia aquí. El admin debe asignar el reporte a un moderador
+          // desde "Gestión de Incidencias", y ahí se convertirá en incidencia.
+          
+          // 3. Actualizar el estado local para reflejar que tiene reporte pendiente
           setProductos(prev =>
             prev.map(p => p.id === producto.id ? {
               ...p,
-              es_peligroso: true,
-              estado: 'suspendido',
-              moderationStatus: 'review', // Cambiado a 'review' para que aparezca en pendientes
-              fecha_suspension: new Date().toISOString(),
-              razon_suspension: 'Detectado como producto potencialmente peligroso'
+              reportes: (p.reportes || 0) + 1,
+              // NO cambiar moderationStatus aquí - eso lo hace el moderador desde la incidencia
             } : p)
           );
 
-          console.log('=== REPORTE COMPLETADO EXITOSAMENTE ===');
+          console.log('=== REPORTE CREADO EXITOSAMENTE ===');
           
           setModalData({
             isOpen: true,
             type: 'success',
-            title: 'Producto Reportado',
-            message: 'El producto ha sido reportado y bloqueado automáticamente. La incidencia aparecerá en "Incidencias pendientes" y el vendedor podrá apelar.',
+            title: 'Reporte Creado',
+            message: 'El reporte ha sido creado exitosamente. Ahora debes ir a "Gestión de Incidencias" para asignar este reporte a un moderador, quien decidirá si suspende o rechaza el producto.',
             confirmText: 'Entendido'
           });
         } catch (error) {
@@ -597,26 +537,7 @@ function GestionProductosPage() {
                         >
                           <FiEye /> Ver producto
                         </button>
-                        {/* Suspender: disponible si está activo (moderationStatus === 'active') */}
-                        {producto.moderationStatus === 'active' && (
-                          <button
-                            onClick={() => cambiarEstadoProducto(producto, 'suspendido')}
-                            className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-lg transition"
-                          >
-                            <MdBlock className="inline mr-2" />
-                            Suspender
-                          </button>
-                        )}
-                        {/* Activar: disponible si está en revisión y no es peligroso */}
-                        {producto.moderationStatus === 'review' && !producto.es_peligroso && (
-                          <button
-                            onClick={() => cambiarEstadoProducto(producto, 'activo')}
-                            className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-lg transition"
-                          >
-                            <FiCheck className="inline mr-2" />
-                            Activar
-                          </button>
-                        )}
+                        {/* Nota: Suspender/Activar solo se puede hacer desde Gestión de Incidencias */}
                         {/* Mensaje para productos bloqueados */}
                         {producto.moderationStatus === 'block' && (
                           <div className="px-4 py-2 bg-red-100 text-red-700 font-semibold rounded-lg border border-red-300">
