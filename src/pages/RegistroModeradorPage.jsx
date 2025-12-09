@@ -197,8 +197,16 @@ function RegistroModeradorPage() {
             isOpen: true,
             type: "success",
             title: "Moderador Registrado",
-            message: `${formData.nombre} ${formData.apellido} ha sido registrado exitosamente como Moderador. Se ha enviado un correo de verificación a ${formData.email}`,
-            onConfirm: () => navigate("/admin/usuarios"),
+            message: `${formData.nombre} ${formData.apellido} ha sido registrado exitosamente como Moderador. Se ha enviado un correo de verificación a ${formData.email}. Serás redirigido a la gestión de usuarios.`,
+            onConfirm: () => {
+              setModalData({
+                isOpen: false,
+                type: "info",
+                title: "",
+                message: "",
+              });
+              navigate("/admin/usuarios");
+            },
             confirmText: "Ir a Usuarios",
           });
 

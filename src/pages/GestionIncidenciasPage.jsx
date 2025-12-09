@@ -695,10 +695,7 @@ function GestionIncidenciasPage() {
         ].includes(modStatus);
         if (!isResolved && !hasFinalDecision) return false;
 
-        // 🔐 FILTRO DE MODERADOR: Si es moderador, solo ver incidencias que resolvió él
-        if (userRole === ROLES.MODERADOR && currentUser?.id) {
-          if (incidence.moderadorId != currentUser.id) return false;
-        }
+        // ✅ Moderadores ahora pueden ver todo el historial (sin filtro por moderadorId)
       }
 
       // Filtrar por prioridad
@@ -724,11 +721,12 @@ function GestionIncidenciasPage() {
       (ap) => ap.estado === "pendiente" || ap.estado === "pending"
     );
 
-    // 🔐 FILTRO DE MODERADOR: Si es moderador, solo ver apelaciones de sus incidencias
+    // 🔐 FILTRO DE MODERADOR: Si es moderador, solo ver apelaciones donde NO fue el moderador original
     if (userRole === ROLES.MODERADOR && currentUser?.id) {
       filtered = filtered.filter((ap) => {
         const incidencia = incidences.find((inc) => inc.id == ap.incidenceId);
-        return incidencia && incidencia.moderadorId == currentUser.id;
+        // Mostrar solo apelaciones donde el moderador NO participó en la incidencia original
+        return incidencia && incidencia.moderadorId != currentUser.id;
       });
     }
 
@@ -1890,9 +1888,17 @@ function GestionIncidenciasPage() {
             `Producto #${relatedIncidence?.productId || "desconocido"}`;
           const productPhoto = relatedIncidence?.productPhoto;
           const alreadyModeratorId = relatedIncidence?.moderadorId;
-          const availableModerators = moderatorUsers.filter(
-            (m) => parseNumericId(m.id) !== parseNumericId(alreadyModeratorId)
-          );
+          // Si es moderador, solo puede autoasignarse. Si es admin, puede asignar a cualquiera
+          const availableModerators =
+            userRole === ROLES.MODERADOR
+              ? moderatorUsers.filter(
+                  (m) =>
+                    parseNumericId(m.id) === parseNumericId(currentUser?.id)
+                )
+              : moderatorUsers.filter(
+                  (m) =>
+                    parseNumericId(m.id) !== parseNumericId(alreadyModeratorId)
+                );
 
           const assignedModeratorId =
             parseNumericId(appeal.assignedModeratorId) ||
