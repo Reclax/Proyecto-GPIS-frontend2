@@ -1893,17 +1893,30 @@ function GestionIncidenciasPage() {
           const alreadyModeratorId = relatedIncidence?.moderadorId;
 
           // Para moderadores: solo pueden autoasignarse
-          // Para admins: pueden asignar a moderadores, pero NO al que ya participó en la incidencia original
+          // Para admins: pueden asignar SOLO a moderadores (no a sí mismos ni a otros admins)
+          // Excluir: el moderador que ya participó Y los administradores
           const availableModerators =
             userRole === ROLES.MODERADOR
               ? moderatorUsers.filter(
                   (m) =>
                     parseNumericId(m.id) === parseNumericId(currentUser?.id)
                 )
-              : moderatorUsers.filter(
-                  (m) =>
-                    parseNumericId(m.id) !== parseNumericId(alreadyModeratorId)
-                );
+              : moderatorUsers.filter((m) => {
+                  const userId = parseNumericId(m.id);
+                  const alreadyModId = parseNumericId(alreadyModeratorId);
+                  const currentAdminId = parseNumericId(currentUser?.id);
+
+                  // Excluir al que ya participó en la incidencia original
+                  if (userId === alreadyModId) return false;
+
+                  // Excluir administradores (solo asignar a moderadores)
+                  const isAdmin = m.Roles?.some(
+                    (role) => role.roleName === "Administrador" || role.id === 1
+                  );
+                  if (isAdmin) return false;
+
+                  return true;
+                });
 
           const assignedModeratorId =
             parseNumericId(appeal.assignedModeratorId) ||
