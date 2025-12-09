@@ -1891,7 +1891,9 @@ function GestionIncidenciasPage() {
             `Producto #${relatedIncidence?.productId || "desconocido"}`;
           const productPhoto = relatedIncidence?.productPhoto;
           const alreadyModeratorId = relatedIncidence?.moderadorId;
-          // Si es moderador, solo puede autoasignarse. Si es admin, puede asignar a cualquiera
+
+          // Para moderadores: solo pueden autoasignarse
+          // Para admins: pueden asignar a moderadores, pero NO al que ya participó en la incidencia original
           const availableModerators =
             userRole === ROLES.MODERADOR
               ? moderatorUsers.filter(
