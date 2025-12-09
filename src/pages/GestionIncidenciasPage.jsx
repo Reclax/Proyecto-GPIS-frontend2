@@ -723,10 +723,13 @@ function GestionIncidenciasPage() {
 
     // 🔐 FILTRO DE MODERADOR: Si es moderador, solo ver apelaciones donde NO fue el moderador original
     if (userRole === ROLES.MODERADOR && currentUser?.id) {
+      const currentModId = parseNumericId(currentUser.id);
       filtered = filtered.filter((ap) => {
         const incidencia = incidences.find((inc) => inc.id == ap.incidenceId);
+        if (!incidencia) return false;
+        const incidenciaModId = parseNumericId(incidencia.moderadorId);
         // Mostrar solo apelaciones donde el moderador NO participó en la incidencia original
-        return incidencia && incidencia.moderadorId != currentUser.id;
+        return incidenciaModId !== currentModId;
       });
     }
 
@@ -2070,37 +2073,58 @@ function GestionIncidenciasPage() {
                       <FiExternalLink className="text-lg" />
                       Ver incidencia relacionada
                     </button>
-                    {availableModerators.length > 0 && (
-                      <div className="flex-1 flex flex-col sm:flex-row gap-2">
-                        <select
-                          className="flex-1 px-3 py-2 border border-gray-300 rounded-xl text-sm"
-                          value={appealAssignments[appeal.id] || ""}
-                          onChange={(e) =>
-                            setAppealAssignments((prev) => ({
-                              ...prev,
-                              [appeal.id]: e.target.value,
-                            }))
-                          }
-                        >
-                          <option value="">Seleccionar moderador</option>
-                          {availableModerators.map((u) => (
-                            <option key={u.id} value={u.id}>
-                              {`${u.name || ""} ${u.lastname || ""}`.trim() ||
-                                u.email ||
-                                `Usuario ${u.id}`}
-                            </option>
-                          ))}
-                        </select>
-                        <button
-                          disabled={
-                            actionLoading || !appealAssignments[appeal.id]
-                          }
-                          onClick={() => handleAssignModeratorToAppeal(appeal)}
-                          className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white font-semibold rounded-xl disabled:opacity-50 text-sm"
-                        >
-                          Asignar moderador
-                        </button>
-                      </div>
+                    {/* Solo admins pueden asignar moderadores. Moderadores pueden autoasignarse desde el botón Tomar */}
+                    {userRole === ROLES.ADMIN &&
+                      availableModerators.length > 0 && (
+                        <div className="flex-1 flex flex-col sm:flex-row gap-2">
+                          <select
+                            className="flex-1 px-3 py-2 border border-gray-300 rounded-xl text-sm"
+                            value={appealAssignments[appeal.id] || ""}
+                            onChange={(e) =>
+                              setAppealAssignments((prev) => ({
+                                ...prev,
+                                [appeal.id]: e.target.value,
+                              }))
+                            }
+                          >
+                            <option value="">Seleccionar moderador</option>
+                            {availableModerators.map((u) => (
+                              <option key={u.id} value={u.id}>
+                                {`${u.name || ""} ${u.lastname || ""}`.trim() ||
+                                  u.email ||
+                                  `Usuario ${u.id}`}
+                              </option>
+                            ))}
+                          </select>
+                          <button
+                            disabled={
+                              actionLoading || !appealAssignments[appeal.id]
+                            }
+                            onClick={() =>
+                              handleAssignModeratorToAppeal(appeal)
+                            }
+                            className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white font-semibold rounded-xl disabled:opacity-50 text-sm"
+                          >
+                            Asignar moderador
+                          </button>
+                        </div>
+                      )}
+                    {/* Moderadores pueden autoasignarse apelaciones */}
+                    {userRole === ROLES.MODERADOR && (
+                      <button
+                        disabled={actionLoading}
+                        onClick={() => {
+                          setAppealAssignments((prev) => ({
+                            ...prev,
+                            [appeal.id]: currentUser.id,
+                          }));
+                          handleAssignModeratorToAppeal(appeal);
+                        }}
+                        className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-xl disabled:opacity-50 text-sm flex items-center gap-2"
+                      >
+                        <MdAssignment className="text-lg" />
+                        Tomar apelación
+                      </button>
                     )}
                   </div>
                 </div>
