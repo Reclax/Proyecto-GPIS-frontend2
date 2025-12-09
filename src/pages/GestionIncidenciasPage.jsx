@@ -2096,27 +2096,6 @@ function GestionIncidenciasPage() {
                         </button>
                       </div>
                     )}
-                    {/* Acciones de apelación */}
-                    {appeal.estado === "pendiente" && canDecideAppeal && (
-                      <div className="flex gap-2 ml-auto">
-                        <button
-                          disabled={actionLoading}
-                          onClick={() => executeAppealDecision(appeal, "lift")}
-                          className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-xl disabled:opacity-50 text-sm"
-                        >
-                          Quitar suspensión
-                        </button>
-                        <button
-                          disabled={actionLoading}
-                          onClick={() =>
-                            executeAppealDecision(appeal, "definitive")
-                          }
-                          className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-xl disabled:opacity-50 text-sm"
-                        >
-                          Suspender definitivamente
-                        </button>
-                      </div>
-                    )}
                   </div>
                 </div>
               </div>

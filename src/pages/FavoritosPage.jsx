@@ -137,7 +137,7 @@ function FavoritosPage() {
       onConfirm: async () => {
         try {
           // Eliminar uno por uno ya que no hay endpoint para eliminar todos
-          const deletePromises = favoritos.map(fav => favoriteAPI.removeFavorite(fav.id));
+          const deletePromises = favoritos.map(fav => favoriteAPI.removeFavorite(fav.productId));
           await Promise.all(deletePromises);
           
           setFavoritos([]);
